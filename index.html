@@ -41,11 +41,25 @@
   .info a { color: var(--red); }
   .empty, .err { text-align: center; padding: 26px 8px; color: var(--soft); }
   .sheet-bg { position: fixed; inset: 0; background: rgba(43,29,27,.45); display: none; align-items: flex-end; z-index: 10; }
-  .sheet { background: var(--paper); width: 100%; max-width: 560px; margin: 0 auto; border-radius: 18px 18px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); }
+  .sheet { background: var(--paper); width: 100%; max-width: 560px; margin: 0 auto; border-radius: 18px 18px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); max-height: 92vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .sheet h3 { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 21px; }
   .sheet .when { color: var(--soft); margin: 2px 0 12px; }
   .sheet label { display: block; font-size: 13px; color: var(--soft); margin: 10px 0 4px; }
-  .sheet input { width: 100%; font: 17px 'Golos Text', system-ui, sans-serif; padding: 12px; border: 1.5px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); }
+  .sheet .lead { font-family: 'Cormorant Infant', serif; font-size: 18px; line-height: 1.3; margin: 4px 0 6px; }
+  .sheet .hint { color: var(--soft); font-size: 12px; }
+  .sheet input, .sheet textarea { width: 100%; font: 17px 'Golos Text', system-ui, sans-serif; padding: 12px; border: 1.5px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); }
+  .sheet textarea { font-size: 16px; resize: vertical; }
+  .days { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .days::-webkit-scrollbar { display: none; }
+  .days button { flex: none; min-width: 60px; padding: 7px 6px; background: var(--card); border: 1.5px solid var(--line); color: var(--ink); text-align: center; line-height: 1.15; font-size: 13px; font-weight: 500; }
+  .days button b { display: block; font: 17px 'Yeseva One', serif; color: var(--red); }
+  .days button.on { background: var(--red); border-color: var(--red); color: #FBF3E6; }
+  .days button.on b { color: #FBF3E6; }
+  .hours { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .hours button { padding: 10px 0; background: var(--card); border: 1.5px solid var(--line); color: var(--ink); font-weight: 600; }
+  .hours button.on { background: var(--red); border-color: var(--red); color: #FBF3E6; }
+  .hours button.busy { background: transparent; border-style: dashed; color: rgba(111,90,78,.55); text-decoration: line-through; cursor: default; }
+  .sum { font-weight: 600; color: var(--red); margin-top: 8px; min-height: 22px; }
   .seg { display: flex; gap: 8px; }
   .seg button { flex: 1; background: transparent; border: 1.5px solid var(--line); color: var(--ink); }
   .seg button.on { border-color: var(--red); background: var(--red); color: #FBF3E6; }
@@ -85,6 +99,29 @@
     <div class="btns" style="margin-top:8px"><button class="b2 go" id="s-x" type="button">Отмена</button></div>
   </div>
 </div>
+<div class="sheet-bg" id="rbg">
+  <div class="sheet" id="rsheet">
+    <h3 id="r-title"></h3>
+    <div class="lead" id="r-lead"></div>
+    <div id="r-idea-wrap"><label for="r-idea">Ваша идея</label><textarea id="r-idea" rows="4" maxlength="900" placeholder="Что хотите провести, для кого, сколько будет человек"></textarea></div>
+    <label id="r-days-lbl">День</label>
+    <div class="days" id="r-days"></div>
+    <div id="r-hours-wrap">
+      <label>Время <span class="hint">— нажмите первый и последний час</span></label>
+      <div class="hours" id="r-hours"></div>
+      <div class="sum" id="r-sum"></div>
+    </div>
+    <div id="r-ppl-wrap"><label>Сколько вас будет?</label>
+      <div class="seg" id="r-ppl"></div>
+      <div class="hint" id="r-ppl-hint" style="margin-top:4px"></div></div>
+    <label for="r-name">Как вас зовут?</label>
+    <input id="r-name" maxlength="60" autocomplete="given-name" placeholder="Имя">
+    <div id="r-note-wrap"><label for="r-note" id="r-note-lbl"></label><textarea id="r-note" rows="3" maxlength="600"></textarea></div>
+    <div class="note">Организатор посмотрит и ответит в чат с ботом — там же можно договориться о деталях.</div>
+    <div class="btns"><button class="b1 go" id="r-go" type="button">Отправить заявку</button></div>
+    <div class="btns" style="margin-top:8px"><button class="b2 go" id="r-x" type="button">Отмена</button></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -99,7 +136,6 @@ let data = null, cur = null, seats = 1;
 
 function toast(t) { const el = $("toast"); el.textContent = t; el.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = "none", 3200); }
 function haptic(kind) { try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred(kind); } catch (e) {} }
-function openBot(start) { const u = `https://t.me/${data ? data.bot : "kovrik_zapis_bot"}?start=${start}`; if (tg && tg.openTelegramLink) tg.openTelegramLink(u); else location.href = u; }
 
 async function load() {
   try {
@@ -132,9 +168,9 @@ function render() {
   }
   $("list").querySelectorAll("[data-b]").forEach(b => b.onclick = () => { const [id, n] = b.dataset.b.split(":"); openSheet(+id, +n); });
   $("more").innerHTML = (data.menu || test) ? `<div class="r1"></div><h2 style="font-size:21px">Ещё в «Коврике»</h2><div class="more">
-    <button onclick="openBot('company')">👯 Своя компания — встреча только для вас</button>
-    <button onclick="openBot('rent')">🏠 Аренда пространства по часам</button>
-    <button onclick="openBot('collab')">🤝 Сотрудничество / свой мастер-класс</button></div>` : "";
+    <button onclick="openRq('company')">👯 Своя компания — встреча только для вас</button>
+    <button onclick="openRq('rent')">🏠 Аренда пространства по часам</button>
+    <button onclick="openRq('collab')">🤝 Сотрудничество / свой мастер-класс</button></div>` : "";
   $("info").innerHTML = `📍 ${esc(data.place)} · <a href="${esc(data.map)}" target="_blank">карта</a><br>💌 ${esc(data.donation)}`;
 }
 
@@ -164,6 +200,121 @@ $("s-go").onclick = async () => {
       toast(j.status === "wait" ? "Вы в листе ожидания — освободится место, бот напишет 🌸" : j.status === "already" ? "Вы уже записаны на эту встречу" : "Заявка отправлена 🌸 Ответ придёт в чат с ботом");
       await load();
     } else { haptic("error"); toast(j.error || "Не получилось, попробуйте ещё раз"); }
+  } catch (e) { haptic("error"); toast("Нет связи — попробуйте ещё раз"); }
+  btn.disabled = false; btn.textContent = "Отправить заявку";
+};
+// ── своя компания, аренда, сотрудничество ──
+const RQ = { company: "👯 Своя компания", rent: "🏠 Аренда пространства", collab: "🤝 Сотрудничество" };
+const hh = h => String(h).padStart(2, "0") + ":00";
+const rub = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " ₽";
+const rateWord = r => r ? rub(r) + "/час" : "по договорённости";
+const PPL = { company: [[2, "2"], [3, "3"], [4, "4"], [5, "4 + 1"]], rent: [[1, "1"], [2, "2"], [3, "3"], [4, "4"]] };
+let rq = null;   // { kind, slots, day, a, b, people }
+
+async function openRq(kind) {
+  rq = { kind, slots: null, day: null, a: null, b: null, people: null };
+  $("r-title").textContent = RQ[kind];
+  $("r-lead").textContent = kind === "company" ? "Встреча только для вас, без посторонних: от 2 до 4 человек (+1 по согласованию)."
+    : kind === "rent" ? "Пространство на несколько часов, до 4 человек — под вашу встречу, занятие или съёмку."
+    : "Хотите провести у нас свой мастер-класс или есть другая идея? Расскажите — обсудим.";
+  $("r-idea-wrap").style.display = kind === "collab" ? "" : "none";
+  $("r-ppl-wrap").style.display = kind === "collab" ? "none" : "";
+  if (PPL[kind]) {
+    $("r-ppl").innerHTML = PPL[kind].map(([n, t]) => `<button type="button" data-p="${n}">${t}</button>`).join("");
+    $("r-ppl").querySelectorAll("button").forEach(b => b.onclick = () => setPeople(+b.dataset.p));
+  }
+  $("r-note-wrap").style.display = kind === "collab" ? "none" : "";
+  $("r-note-lbl").textContent = kind === "company" ? "Пару слов о встрече — повод, пожелания (необязательно)" : "Что вы будете делать? (обязательно)";
+  $("r-note").placeholder = kind === "rent" ? "Например: занятие по рисованию для подруг, съёмка, репетиция" : "";
+  $("r-days-lbl").textContent = kind === "collab" ? "Когда вам удобно? (можно не выбирать)" : "День";
+  $("r-days").innerHTML = '<span class="hint">Загружаю свободное время…</span>';
+  $("r-hours-wrap").style.display = "none";
+  $("r-name").value = $("r-name").value || (data && data.name) || "";
+  setPeople(null);
+  $("rbg").style.display = "flex"; $("rsheet").scrollTop = 0;
+  await loadSlots();
+}
+
+async function loadSlots() {
+  try {
+    const r = await fetch(API + "/api/slots" + (init ? "?init=" + encodeURIComponent(init) : ""), { cache: "no-store" });
+    rq.slots = await r.json();
+    if (!$("r-name").value && rq.slots.name) $("r-name").value = rq.slots.name;
+  } catch (e) { $("r-days").innerHTML = '<span class="hint">Не получилось загрузить — проверьте интернет и откройте ещё раз.</span>'; return; }
+  const s = rq.slots;
+  if (rq.kind === "rent") $("r-lead").textContent = `Почасово, с ${hh(s.from)} до ${hh(s.to)}, до 4 человек. Пн–чт — ${rateWord(s.rates[0])}, пт — ${rateWord(s.rates[1])}, сб–вс — ${rateWord(s.rates[2])}.`;
+  if (rq.day && !s.days.some(d => d.date === rq.day)) rq.day = null;
+  if (!rq.day && rq.kind !== "collab" && s.days.length) rq.day = s.days[0].date;
+  drawRq();
+}
+
+function drawRq() {
+  const s = rq.slots;
+  $("r-days").innerHTML = s.days.length ? s.days.map(d => `<button type="button" data-d="${d.date}" class="${d.date === rq.day ? "on" : ""}">${d.wd}<b>${String(d.d).padStart(2, "0")}.${String(d.mo).padStart(2, "0")}</b></button>`).join("")
+    : '<span class="hint">Ближайшие две недели всё занято — напишите в чат с ботом, подберём время.</span>';
+  $("r-days").querySelectorAll("[data-d]").forEach(b => b.onclick = () => {
+    rq.day = rq.kind === "collab" && rq.day === b.dataset.d ? null : b.dataset.d; rq.a = rq.b = null; drawRq();
+  });
+  const day = s.days.find(d => d.date === rq.day);
+  $("r-hours-wrap").style.display = day ? "" : "none";
+  if (!day) return;
+  const busy = new Set(day.busy);
+  let html = "";
+  for (let h = s.from; h < s.to; h++) {
+    const on = rq.a !== null && h >= rq.a && h <= rq.b;
+    html += busy.has(h) ? `<button type="button" class="busy" disabled>${hh(h)}</button>` : `<button type="button" data-h="${h}" class="${on ? "on" : ""}">${hh(h)}</button>`;
+  }
+  $("r-hours").innerHTML = html;
+  $("r-hours").querySelectorAll("[data-h]").forEach(b => b.onclick = () => tapHour(+b.dataset.h, busy));
+  let sum = "";
+  if (rq.a !== null) {
+    const n = rq.b - rq.a + 1;
+    sum = `${hh(rq.a)}–${hh(rq.b + 1)} · ${n} ч`;
+    if (rq.kind === "rent") sum += day.rate ? ` × ${rub(day.rate)} = ${rub(n * day.rate)}` : " · стоимость по договорённости";
+  } else sum = rq.kind === "collab" ? "" : "Нажмите час начала, потом последний час";
+  $("r-sum").textContent = sum;
+  $("r-sum").style.color = rq.a !== null ? "" : "var(--soft)";
+}
+
+function tapHour(h, busy) {
+  if (rq.a === null || rq.b > rq.a || h < rq.a) { rq.a = rq.b = h; }
+  else {
+    for (let x = rq.a; x <= h; x++) if (busy.has(x)) { toast("В середине есть занятое время"); rq.a = rq.b = h; drawRq(); return; }
+    rq.b = h;
+  }
+  drawRq();
+}
+
+function setPeople(n) {
+  if (rq) rq.people = n;
+  $("r-ppl").querySelectorAll("button").forEach(b => b.classList.toggle("on", +b.dataset.p === n));
+  $("r-ppl-hint").textContent = rq && rq.kind === "company" && n === 5 ? "Пятый гость — по согласованию с организатором." : "";
+}
+$("r-x").onclick = () => { $("rbg").style.display = "none"; };
+$("rbg").onclick = e => { if (e.target === $("rbg")) $("rbg").style.display = "none"; };
+$("r-go").onclick = async () => {
+  if (!rq || !rq.slots) return;
+  const name = $("r-name").value.trim(), idea = $("r-idea").value.trim(), note = $("r-note").value.trim();
+  if (rq.kind === "collab" && !idea) { toast("Расскажите, пожалуйста, об идее"); $("r-idea").focus(); return; }
+  if (rq.kind !== "collab" && (!rq.day || rq.a === null)) { toast("Выберите день и время"); return; }
+  if (rq.kind !== "collab" && !rq.people) { toast(rq.kind === "rent" ? "Сколько будет человек? Не больше 4" : "Сколько вас будет?"); return; }
+  if (rq.kind === "rent" && !note) { toast("Опишите, пожалуйста, что будете делать"); $("r-note").focus(); return; }
+  if (!name) { toast("Напишите, пожалуйста, имя"); $("r-name").focus(); return; }
+  if (!init) { toast("Откройте окошко из бота @kovrik_zapis_bot в Telegram"); return; }
+  const btn = $("r-go"); btn.disabled = true; btn.textContent = "Отправляю…";
+  const timed = rq.day && rq.a !== null;
+  try {
+    const r = await fetch(API + "/api/request", { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ init, kind: rq.kind, name, note: rq.kind === "collab" ? idea : note, people: rq.people,
+        date: timed ? rq.day : null, a: timed ? rq.a : null, b: timed ? rq.b : null }) });
+    const j = await r.json();
+    if (j.ok) {
+      haptic("success"); $("rbg").style.display = "none"; $("r-idea").value = ""; $("r-note").value = "";
+      toast("Заявка отправлена 🌸 Ответ придёт в чат с ботом");
+    } else {
+      haptic("error"); toast(j.error || "Не получилось, попробуйте ещё раз");
+      if (j.busy) { rq.a = rq.b = null; await loadSlots(); }
+    }
   } catch (e) { haptic("error"); toast("Нет связи — попробуйте ещё раз"); }
   btn.disabled = false; btn.textContent = "Отправить заявку";
 };
