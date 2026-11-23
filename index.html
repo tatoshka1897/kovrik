@@ -169,7 +169,7 @@ function render() {
   $("list").querySelectorAll("[data-b]").forEach(b => b.onclick = () => { const [id, n] = b.dataset.b.split(":"); openSheet(+id, +n); });
   $("more").innerHTML = (data.menu || test) ? `<div class="r1"></div><h2 style="font-size:21px">Ещё в «Коврике»</h2><div class="more">
     <button onclick="openRq('company')">👯 Своя компания — встреча только для вас</button>
-    <button onclick="openRq('rent')">🏠 Аренда пространства по часам</button>
+    ${data.rent ? `<button onclick="openRq('rent')">🏠 Аренда пространства по часам</button>` : ""}
     <button onclick="openRq('collab')">🤝 Сотрудничество / свой мастер-класс</button></div>` : "";
   $("info").innerHTML = `📍 ${esc(data.place)} · <a href="${esc(data.map)}" target="_blank">карта</a><br>💌 ${esc(data.donation)}`;
 }
@@ -207,7 +207,6 @@ $("s-go").onclick = async () => {
 const RQ = { company: "👯 Своя компания", rent: "🏠 Аренда пространства", collab: "🤝 Сотрудничество" };
 const hh = h => String(h).padStart(2, "0") + ":00";
 const rub = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " ₽";
-const rateWord = r => r ? rub(r) + "/час" : "по договорённости";
 const PPL = { company: [[2, "2"], [3, "3"], [4, "4"], [5, "4 + 1"]], rent: [[1, "1"], [2, "2"], [3, "3"], [4, "4"]] };
 let rq = null;   // { kind, slots, day, a, b, people }
 
@@ -237,12 +236,13 @@ async function openRq(kind) {
 
 async function loadSlots() {
   try {
-    const r = await fetch(API + "/api/slots" + (init ? "?init=" + encodeURIComponent(init) : ""), { cache: "no-store" });
+    const r = await fetch(API + "/api/slots?kind=" + rq.kind + (init ? "&init=" + encodeURIComponent(init) : ""), { cache: "no-store" });
     rq.slots = await r.json();
+    if (!rq.slots.ok) { $("rbg").style.display = "none"; toast(rq.slots.error || "Не получилось, попробуйте ещё раз"); load(); return; }
     if (!$("r-name").value && rq.slots.name) $("r-name").value = rq.slots.name;
   } catch (e) { $("r-days").innerHTML = '<span class="hint">Не получилось загрузить — проверьте интернет и откройте ещё раз.</span>'; return; }
   const s = rq.slots;
-  if (rq.kind === "rent") $("r-lead").textContent = `Почасово, с ${hh(s.from)} до ${hh(s.to)}, до 4 человек. Пн–чт — ${rateWord(s.rates[0])}, пт — ${rateWord(s.rates[1])}, сб–вс — ${rateWord(s.rates[2])}.`;
+  if (rq.kind === "rent") $("r-lead").textContent = `Почасово, до 4 человек. ${s.rateLine || ""}`;
   if (rq.day && !s.days.some(d => d.date === rq.day)) rq.day = null;
   if (!rq.day && rq.kind !== "collab" && s.days.length) rq.day = s.days[0].date;
   drawRq();
@@ -259,8 +259,9 @@ function drawRq() {
   $("r-hours-wrap").style.display = day ? "" : "none";
   if (!day) return;
   const busy = new Set(day.busy);
+  for (let h = 0; h < 24; h++) if (!day.hours.includes(h)) busy.add(h);
   let html = "";
-  for (let h = s.from; h < s.to; h++) {
+  for (const h of day.hours) {
     const on = rq.a !== null && h >= rq.a && h <= rq.b;
     html += busy.has(h) ? `<button type="button" class="busy" disabled>${hh(h)}</button>` : `<button type="button" data-h="${h}" class="${on ? "on" : ""}">${hh(h)}</button>`;
   }
@@ -279,7 +280,7 @@ function drawRq() {
 function tapHour(h, busy) {
   if (rq.a === null || rq.b > rq.a || h < rq.a) { rq.a = rq.b = h; }
   else {
-    for (let x = rq.a; x <= h; x++) if (busy.has(x)) { toast("В середине есть занятое время"); rq.a = rq.b = h; drawRq(); return; }
+    for (let x = rq.a; x <= h; x++) if (busy.has(x)) { toast("В середине есть недоступное время"); rq.a = rq.b = h; drawRq(); return; }
     rq.b = h;
   }
   drawRq();
@@ -314,6 +315,7 @@ $("r-go").onclick = async () => {
     } else {
       haptic("error"); toast(j.error || "Не получилось, попробуйте ещё раз");
       if (j.busy) { rq.a = rq.b = null; await loadSlots(); }
+      if (j.closed) { $("rbg").style.display = "none"; load(); }
     }
   } catch (e) { haptic("error"); toast("Нет связи — попробуйте ещё раз"); }
   btn.disabled = false; btn.textContent = "Отправить заявку";
