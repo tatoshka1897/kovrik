@@ -88,13 +88,13 @@
   <div class="sheet">
     <h3 id="s-title"></h3>
     <div class="when" id="s-when"></div>
-    <label for="s-name">Как вас зовут?</label>
+    <label for="s-name">Как тебя зовут?</label>
     <input id="s-name" maxlength="60" autocomplete="given-name" placeholder="Имя">
     <div id="s-seg-wrap">
       <label>Сколько мест?</label>
       <div class="seg"><button id="s1" class="on" type="button">1 место</button><button id="s2" type="button">Вдвоём</button></div>
     </div>
-    <div class="note">Заявку подтверждает организатор — ответ придёт в чат с ботом. Ваше имя увидит только организатор.</div>
+    <div class="note">Заявку подтверждает организатор — ответ придёт в чат с ботом. Твоё имя увидит только организатор.</div>
     <div class="btns"><button class="b1 go" id="s-go" type="button">Отправить заявку</button></div>
     <div class="btns" style="margin-top:8px"><button class="b2 go" id="s-x" type="button">Отмена</button></div>
   </div>
@@ -103,18 +103,18 @@
   <div class="sheet" id="rsheet">
     <h3 id="r-title"></h3>
     <div class="lead" id="r-lead"></div>
-    <div id="r-idea-wrap"><label for="r-idea">Ваша идея</label><textarea id="r-idea" rows="4" maxlength="900" placeholder="Что хотите провести, для кого, сколько будет человек"></textarea></div>
+    <div id="r-idea-wrap"><label for="r-idea">Твоя идея</label><textarea id="r-idea" rows="4" maxlength="900" placeholder="Что хочешь провести, для кого, сколько будет человек"></textarea></div>
     <label id="r-days-lbl">День</label>
     <div class="days" id="r-days"></div>
     <div id="r-hours-wrap">
-      <label>Время <span class="hint">— нажмите первый и последний час</span></label>
+      <label>Время <span class="hint">— нажми первый и последний час</span></label>
       <div class="hours" id="r-hours"></div>
       <div class="sum" id="r-sum"></div>
     </div>
     <div id="r-ppl-wrap"><label>Сколько вас будет?</label>
       <div class="seg" id="r-ppl"></div>
       <div class="hint" id="r-ppl-hint" style="margin-top:4px"></div></div>
-    <label for="r-name">Как вас зовут?</label>
+    <label for="r-name">Как тебя зовут?</label>
     <input id="r-name" maxlength="60" autocomplete="given-name" placeholder="Имя">
     <div id="r-note-wrap"><label for="r-note" id="r-note-lbl"></label><textarea id="r-note" rows="3" maxlength="600"></textarea></div>
     <div class="note">Организатор посмотрит и ответит в чат с ботом — там же можно договориться о деталях.</div>
@@ -143,7 +143,7 @@ async function load() {
     data = await r.json();
     render();
   } catch (e) {
-    $("list").innerHTML = '<div class="err">Не получилось загрузить встречи. Проверьте интернет.<br><br><button class="b2" onclick="load()">Обновить</button></div>';
+    $("list").innerHTML = '<div class="err">Не получилось загрузить встречи. Проверь интернет.<br><br><button class="b2" onclick="load()">Обновить</button></div>';
   }
 }
 
@@ -154,9 +154,9 @@ function render() {
     const el = document.createElement("div"); el.className = "card";
     let seatsTxt = m.free ? `свободно ${m.free} из ${m.seats}` : m.extra ? "основные места заняты — можно попросить дополнительное" : "мест нет — можно встать в лист ожидания";
     let action = "";
-    if (m.mine === "active") action = '<div class="status">✅ Вы записаны</div>';
+    if (m.mine === "active") action = '<div class="status">✅ Место за тобой</div>';
     else if (m.mine === "pending") action = '<div class="status">⏳ Заявка отправлена — ответ придёт в чат</div>';
-    else if (m.mine === "wait") action = '<div class="status">🕐 Вы в листе ожидания</div>';
+    else if (m.mine === "wait") action = '<div class="status">🕐 Ты в листе ожидания</div>';
     else if (m.late) action = (m.free || m.extra) ? `<div class="btns"><button class="b1" data-b="${m.id}:1">Попросить место</button></div>` : '<div class="status">🔒 Запись закрыта</div>';
     else if (m.free) action = `<div class="btns"><button class="b1" data-b="${m.id}:1">Записаться ♥</button>${data.pairs && m.free + m.extra >= 2 ? `<button class="b2" data-b="${m.id}:2">Вдвоём</button>` : ""}</div>`;
     else if (m.extra) action = `<div class="btns"><button class="b1" data-b="${m.id}:1">Попросить доп. место</button></div>`;
@@ -175,7 +175,7 @@ function render() {
 }
 
 function openSheet(id, n) {
-  if (!init) { toast("Откройте окошко из бота @kovrik_zapis_bot в Telegram"); return; }
+  if (!init) { toast("Открой окошко из бота @kovrik_zapis_bot в Telegram"); return; }
   cur = data.meetings.find(m => m.id === id); if (!cur) return;
   setSeats(n);
   $("s-title").textContent = cur.title;
@@ -190,17 +190,17 @@ $("s-x").onclick = () => { $("bg").style.display = "none"; };
 $("bg").onclick = e => { if (e.target === $("bg")) $("bg").style.display = "none"; };
 $("s-go").onclick = async () => {
   const name = $("s-name").value.trim();
-  if (!name) { toast("Напишите, пожалуйста, имя"); $("s-name").focus(); return; }
+  if (!name) { toast("Напиши, пожалуйста, имя"); $("s-name").focus(); return; }
   const btn = $("s-go"); btn.disabled = true; btn.textContent = "Отправляю…";
   try {
     const r = await fetch(API + "/api/book", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ init, mid: cur.id, n: seats, name }) });
     const j = await r.json();
     if (j.ok) {
       haptic("success"); $("bg").style.display = "none";
-      toast(j.status === "wait" ? "Вы в листе ожидания — освободится место, бот напишет 🌸" : j.status === "already" ? "Вы уже записаны на эту встречу" : "Заявка отправлена 🌸 Ответ придёт в чат с ботом");
+      toast(j.status === "wait" ? "Ты в листе ожидания — освободится место, бот напишет 🌸" : j.status === "already" ? "Твоя запись на эту встречу уже есть" : "Заявка отправлена 🌸 Ответ придёт в чат с ботом");
       await load();
-    } else { haptic("error"); toast(j.error || "Не получилось, попробуйте ещё раз"); }
-  } catch (e) { haptic("error"); toast("Нет связи — попробуйте ещё раз"); }
+    } else { haptic("error"); toast(j.error || "Не получилось, попробуй ещё раз"); }
+  } catch (e) { haptic("error"); toast("Нет связи — попробуй ещё раз"); }
   btn.disabled = false; btn.textContent = "Отправить заявку";
 };
 // ── своя компания, аренда, сотрудничество ──
@@ -214,8 +214,8 @@ async function openRq(kind) {
   rq = { kind, slots: null, day: null, a: null, b: null, people: null };
   $("r-title").textContent = RQ[kind];
   $("r-lead").textContent = kind === "company" ? "Встреча только для вас, без посторонних: от 2 до 4 человек (+1 по согласованию)."
-    : kind === "rent" ? "Пространство на несколько часов, до 4 человек — под вашу встречу, занятие или съёмку."
-    : "Хотите провести у нас свой мастер-класс или есть другая идея? Расскажите — обсудим.";
+    : kind === "rent" ? "Пространство на несколько часов, до 4 человек — под твою встречу, занятие или съёмку."
+    : "Хочешь провести у нас свой мастер-класс или есть другая идея? Расскажи — обсудим.";
   $("r-idea-wrap").style.display = kind === "collab" ? "" : "none";
   $("r-ppl-wrap").style.display = kind === "collab" ? "none" : "";
   if (PPL[kind]) {
@@ -223,9 +223,9 @@ async function openRq(kind) {
     $("r-ppl").querySelectorAll("button").forEach(b => b.onclick = () => setPeople(+b.dataset.p));
   }
   $("r-note-wrap").style.display = kind === "collab" ? "none" : "";
-  $("r-note-lbl").textContent = kind === "company" ? "Пару слов о встрече — повод, пожелания (необязательно)" : "Что вы будете делать? (обязательно)";
+  $("r-note-lbl").textContent = kind === "company" ? "Пару слов о встрече — повод, пожелания (необязательно)" : "Что планируется? (обязательно)";
   $("r-note").placeholder = kind === "rent" ? "Например: занятие по рисованию для подруг, съёмка, репетиция" : "";
-  $("r-days-lbl").textContent = kind === "collab" ? "Когда вам удобно? (можно не выбирать)" : "День";
+  $("r-days-lbl").textContent = kind === "collab" ? "Когда тебе удобно? (можно не выбирать)" : "День";
   $("r-days").innerHTML = '<span class="hint">Загружаю свободное время…</span>';
   $("r-hours-wrap").style.display = "none";
   $("r-name").value = $("r-name").value || (data && data.name) || "";
@@ -238,9 +238,9 @@ async function loadSlots() {
   try {
     const r = await fetch(API + "/api/slots?kind=" + rq.kind + (init ? "&init=" + encodeURIComponent(init) : ""), { cache: "no-store" });
     rq.slots = await r.json();
-    if (!rq.slots.ok) { $("rbg").style.display = "none"; toast(rq.slots.error || "Не получилось, попробуйте ещё раз"); load(); return; }
+    if (!rq.slots.ok) { $("rbg").style.display = "none"; toast(rq.slots.error || "Не получилось, попробуй ещё раз"); load(); return; }
     if (!$("r-name").value && rq.slots.name) $("r-name").value = rq.slots.name;
-  } catch (e) { $("r-days").innerHTML = '<span class="hint">Не получилось загрузить — проверьте интернет и откройте ещё раз.</span>'; return; }
+  } catch (e) { $("r-days").innerHTML = '<span class="hint">Не получилось загрузить — проверь интернет и открой ещё раз.</span>'; return; }
   const s = rq.slots;
   if (rq.kind === "rent") $("r-lead").textContent = `Почасово, до 4 человек. ${s.rateLine || ""}`;
   if (rq.day && !s.days.some(d => d.date === rq.day)) rq.day = null;
@@ -251,7 +251,7 @@ async function loadSlots() {
 function drawRq() {
   const s = rq.slots;
   $("r-days").innerHTML = s.days.length ? s.days.map(d => `<button type="button" data-d="${d.date}" class="${d.date === rq.day ? "on" : ""}">${d.wd}<b>${String(d.d).padStart(2, "0")}.${String(d.mo).padStart(2, "0")}</b></button>`).join("")
-    : '<span class="hint">Ближайшие две недели всё занято — напишите в чат с ботом, подберём время.</span>';
+    : '<span class="hint">Ближайшие две недели всё занято — напиши в чат с ботом, подберём время.</span>';
   $("r-days").querySelectorAll("[data-d]").forEach(b => b.onclick = () => {
     rq.day = rq.kind === "collab" && rq.day === b.dataset.d ? null : b.dataset.d; rq.a = rq.b = null; drawRq();
   });
@@ -272,7 +272,7 @@ function drawRq() {
     const n = rq.b - rq.a + 1;
     sum = `${hh(rq.a)}–${hh(rq.b + 1)} · ${n} ч`;
     if (rq.kind === "rent") sum += day.rate ? ` × ${rub(day.rate)} = ${rub(n * day.rate)}` : " · стоимость по договорённости";
-  } else sum = rq.kind === "collab" ? "" : "Нажмите час начала, потом последний час";
+  } else sum = rq.kind === "collab" ? "" : "Нажми час начала, потом последний час";
   $("r-sum").textContent = sum;
   $("r-sum").style.color = rq.a !== null ? "" : "var(--soft)";
 }
@@ -296,12 +296,12 @@ $("rbg").onclick = e => { if (e.target === $("rbg")) $("rbg").style.display = "n
 $("r-go").onclick = async () => {
   if (!rq || !rq.slots) return;
   const name = $("r-name").value.trim(), idea = $("r-idea").value.trim(), note = $("r-note").value.trim();
-  if (rq.kind === "collab" && !idea) { toast("Расскажите, пожалуйста, об идее"); $("r-idea").focus(); return; }
-  if (rq.kind !== "collab" && (!rq.day || rq.a === null)) { toast("Выберите день и время"); return; }
+  if (rq.kind === "collab" && !idea) { toast("Расскажи, пожалуйста, об идее"); $("r-idea").focus(); return; }
+  if (rq.kind !== "collab" && (!rq.day || rq.a === null)) { toast("Выбери день и время"); return; }
   if (rq.kind !== "collab" && !rq.people) { toast(rq.kind === "rent" ? "Сколько будет человек? Не больше 4" : "Сколько вас будет?"); return; }
-  if (rq.kind === "rent" && !note) { toast("Опишите, пожалуйста, что будете делать"); $("r-note").focus(); return; }
-  if (!name) { toast("Напишите, пожалуйста, имя"); $("r-name").focus(); return; }
-  if (!init) { toast("Откройте окошко из бота @kovrik_zapis_bot в Telegram"); return; }
+  if (rq.kind === "rent" && !note) { toast("Опиши, пожалуйста, что планируется"); $("r-note").focus(); return; }
+  if (!name) { toast("Напиши, пожалуйста, имя"); $("r-name").focus(); return; }
+  if (!init) { toast("Открой окошко из бота @kovrik_zapis_bot в Telegram"); return; }
   const btn = $("r-go"); btn.disabled = true; btn.textContent = "Отправляю…";
   const timed = rq.day && rq.a !== null;
   try {
@@ -313,11 +313,11 @@ $("r-go").onclick = async () => {
       haptic("success"); $("rbg").style.display = "none"; $("r-idea").value = ""; $("r-note").value = "";
       toast("Заявка отправлена 🌸 Ответ придёт в чат с ботом");
     } else {
-      haptic("error"); toast(j.error || "Не получилось, попробуйте ещё раз");
+      haptic("error"); toast(j.error || "Не получилось, попробуй ещё раз");
       if (j.busy) { rq.a = rq.b = null; await loadSlots(); }
       if (j.closed) { $("rbg").style.display = "none"; load(); }
     }
-  } catch (e) { haptic("error"); toast("Нет связи — попробуйте ещё раз"); }
+  } catch (e) { haptic("error"); toast("Нет связи — попробуй ещё раз"); }
   btn.disabled = false; btn.textContent = "Отправить заявку";
 };
 load();
