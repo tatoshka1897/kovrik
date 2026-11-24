@@ -94,7 +94,7 @@
       <label>Сколько мест?</label>
       <div class="seg"><button id="s1" class="on" type="button">1 место</button><button id="s2" type="button">Вдвоём</button></div>
     </div>
-    <div class="note">Заявку подтверждает организатор — ответ придёт в чат с ботом. Твоё имя увидит только организатор.</div>
+    <div class="note">Заявку подтверждает Таня — ответ придёт в чат с ботом. Твоё имя увидит только Таня.</div>
     <div class="btns"><button class="b1 go" id="s-go" type="button">Отправить заявку</button></div>
     <div class="btns" style="margin-top:8px"><button class="b2 go" id="s-x" type="button">Отмена</button></div>
   </div>
@@ -117,7 +117,7 @@
     <label for="r-name">Как тебя зовут?</label>
     <input id="r-name" maxlength="60" autocomplete="given-name" placeholder="Имя">
     <div id="r-note-wrap"><label for="r-note" id="r-note-lbl"></label><textarea id="r-note" rows="3" maxlength="600"></textarea></div>
-    <div class="note">Организатор посмотрит и ответит в чат с ботом — там же можно договориться о деталях.</div>
+    <div class="note">Таня посмотрит и ответит в чат с ботом — там же можно договориться о деталях.</div>
     <div class="btns"><button class="b1 go" id="r-go" type="button">Отправить заявку</button></div>
     <div class="btns" style="margin-top:8px"><button class="b2 go" id="r-x" type="button">Отмена</button></div>
   </div>
@@ -289,7 +289,7 @@ function tapHour(h, busy) {
 function setPeople(n) {
   if (rq) rq.people = n;
   $("r-ppl").querySelectorAll("button").forEach(b => b.classList.toggle("on", +b.dataset.p === n));
-  $("r-ppl-hint").textContent = rq && rq.kind === "company" && n === 5 ? "Пятый гость — по согласованию с организатором." : "";
+  $("r-ppl-hint").textContent = rq && rq.kind === "company" && n === 5 ? "Пятый гость — по согласованию с Таней." : "";
 }
 $("r-x").onclick = () => { $("rbg").style.display = "none"; };
 $("rbg").onclick = e => { if (e.target === $("rbg")) $("rbg").style.display = "none"; };
